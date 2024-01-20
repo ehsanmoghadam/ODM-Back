@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import {
   Organization,
   OrganizationDocument,
+  PaginationOrganization,
 } from './schemas/organization.schema';
 import { Model } from 'mongoose';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -15,8 +16,28 @@ export class OrganizationService {
     private readonly model: Model<OrganizationDocument>,
   ) {}
 
-  async findAll(): Promise<Organization[]> {
-    return await this.model.find().exec();
+  async getAll({
+    pageSize,
+    pageNumber,
+  }: {
+    pageSize: number;
+    pageNumber: number;
+  }): Promise<PaginationOrganization> {
+    const totalCounts = await this.model.countDocuments().exec();
+    const totalPages = Math.floor((totalCounts - 1) / pageSize) + 1;
+    const source = await this.model
+      .find()
+      .limit(pageSize)
+      .skip(pageNumber * pageSize)
+      .exec();
+
+    return {
+      source: source,
+      totalPages: totalPages,
+      totalCounts: totalCounts,
+      currentPage: pageNumber,
+      pageSize: pageSize,
+    };
   }
 
   async findOne(id: string): Promise<Organization> {

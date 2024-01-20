@@ -1,18 +1,35 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { BaseOrganizationDto } from './dto/base-organization.dto';
-
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+@ApiTags('organizations')
 @Controller('organizations')
 export class OrganizationController {
   constructor(private readonly service: OrganizationService) {}
 
+  @UseGuards(JwtAuthGuard)
   @ApiOkResponse({ type: [BaseOrganizationDto] })
   @Get()
-  async findAll() {
-    return await this.service.findAll();
+  async getAll(
+    @Query()
+    { pageSize, pageNumber }: { pageSize?: number; pageNumber?: number },
+  ) {
+    return await this.service.getAll({
+      pageSize: pageSize || 20,
+      pageNumber: pageNumber || 1,
+    });
   }
 
   @ApiOkResponse({ type: BaseOrganizationDto })
