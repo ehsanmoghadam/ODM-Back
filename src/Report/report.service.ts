@@ -43,4 +43,35 @@ export class ReportService {
       integratesCount: totalRes[1],
     };
   }
+
+  async getDepartmentsUsage(fieldId: string): Promise<any[]> {
+    return this.model.aggregate([
+      {
+        $unwind: '$items',
+      },
+      {
+        $match: {
+          'items.data.type': 'department',
+          'items.data.field.id': fieldId,
+        },
+      },
+      {
+        $group: {
+          _id: { companyId: '$items.data.company.id' },
+          count: { $sum: 1 },
+          companyName: { $first: '$items.data.company.name' },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $project: {
+          _id: 0,
+          companyName: '$companyName',
+          totalUsage: '$count',
+        },
+      },
+    ]);
+  }
 }
